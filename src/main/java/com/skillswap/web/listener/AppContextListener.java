@@ -3,6 +3,11 @@ package com.skillswap.web.listener;
 import com.skillswap.db.Database;
 import com.skillswap.db.DatabaseInitializer;
 import com.skillswap.util.Config;
+import com.skillswap.dao.UserDao;
+import com.skillswap.dao.jdbc.JdbcUserDao;
+import com.skillswap.model.Admin;
+import com.skillswap.model.enums.Role;
+import com.skillswap.util.PasswordHasher;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
@@ -33,6 +38,9 @@ public class AppContextListener implements ServletContextListener {
                 new DatabaseInitializer().initialize();
             }
 
+            // 4. Seed admin account if none exists
+            seedAdminAccountIfMissing();
+
             LOGGER.log(Level.INFO, "SkillSwap application initialized successfully.");
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to initialize SkillSwap application context", e);
@@ -48,6 +56,27 @@ public class AppContextListener implements ServletContextListener {
             LOGGER.log(Level.INFO, "Database connection pool shut down cleanly.");
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Error during shutdown", e);
+        }
+    }
+
+    private void seedAdminAccountIfMissing() {
+        try {
+            UserDao userDao = new JdbcUserDao();
+            String adminEmail = Config.get("admin.email", "admin@skillswap.local");
+            if (!userDao.emailExists(adminEmail)) {
+                String adminPassword = Config.get("admin.password", "ChangeMe123");
+                Admin admin = new Admin();
+                admin.setFullName("System Administrator");
+                admin.setEmail(adminEmail);
+                admin.setPasswordHash(PasswordHasher.hash(adminPassword));
+                admin.setRole(Role.ADMIN);
+                admin.setActive(true);
+                admin.setCredits(0);
+                userDao.insert(admin);
+                LOGGER.log(Level.INFO, "Seeded default administrator account: {0}", adminEmail);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to seed default administrator account", e);
         }
     }
 }

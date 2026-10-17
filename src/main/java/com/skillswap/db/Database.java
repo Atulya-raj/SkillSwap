@@ -42,9 +42,9 @@ public final class Database {
      * @return singleton instance
      */
     public static Database getInstance() {
-        if (instance == null) {
+        if (instance == null || instance.isShutdown.get()) {
             synchronized (Database.class) {
-                if (instance == null) {
+                if (instance == null || instance.isShutdown.get()) {
                     instance = new Database();
                 }
             }

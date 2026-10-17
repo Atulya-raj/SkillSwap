@@ -37,12 +37,17 @@ public final class TransactionManager {
      * @param work the transactional unit of work
      * @param <T> the return type
      * @return the result of the work
-     * @throws Exception if transaction fails
      */
-    public static <T> T execute(TxWork<T> work) throws Exception {
+    public static <T> T execute(TxWork<T> work) {
         if (CURRENT_TX_CONNECTION.get() != null) {
             // Already inside an active transaction, join it
-            return work.run();
+            try {
+                return work.run();
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new DataAccessException("Transactional work failed", e);
+            }
         }
 
         Database db = Database.getInstance();
@@ -61,10 +66,12 @@ public final class TransactionManager {
             } catch (SQLException e) {
                 LOGGER.log(Level.SEVERE, "Rollback failed", e);
             }
-            if (t instanceof Exception) {
-                throw (Exception) t;
+            if (t instanceof RuntimeException) {
+                throw (RuntimeException) t;
+            } else if (t instanceof Error) {
+                throw (Error) t;
             } else {
-                throw new DataAccessException("Transaction failed due to error", t);
+                throw new DataAccessException("Transaction failed due to checked exception", t);
             }
         } finally {
             CURRENT_TX_CONNECTION.remove();

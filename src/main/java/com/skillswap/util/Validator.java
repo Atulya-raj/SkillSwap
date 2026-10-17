@@ -26,6 +26,42 @@ public final class Validator {
     }
 
     /**
+     * Checks if an email address string is syntactically valid and within length limits.
+     *
+     * @param email email string to validate
+     * @return true if valid, false otherwise
+     */
+    public static boolean isValidEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+        String trimmed = email.trim();
+        if (trimmed.length() > 150) {
+            return false;
+        }
+        return EMAIL_PATTERN.matcher(trimmed).matches();
+    }
+
+    /**
+     * Checks if a password string meets minimum length and character complexity requirements.
+     *
+     * @param password password string to validate
+     * @return true if strong, false otherwise
+     */
+    public static boolean isStrongPassword(String password) {
+        if (password == null || password.length() < 8) {
+            return false;
+        }
+        boolean hasLetter = false;
+        boolean hasDigit = false;
+        for (char c : password.toCharArray()) {
+            if (Character.isLetter(c)) hasLetter = true;
+            if (Character.isDigit(c)) hasDigit = true;
+        }
+        return hasLetter && hasDigit;
+    }
+
+    /**
      * Validates user registration fields.
      *
      * @param fullName user full name

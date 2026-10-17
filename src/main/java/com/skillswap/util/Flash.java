@@ -58,6 +58,16 @@ public final class Flash {
     }
 
     /**
+     * Sets a warning flash message.
+     *
+     * @param req HTTP request
+     * @param message warning message text
+     */
+    public static void warning(HttpServletRequest req, String message) {
+        set(req, "warning", message);
+    }
+
+    /**
      * Sets an informational flash message.
      *
      * @param req HTTP request
@@ -70,6 +80,9 @@ public final class Flash {
     private static void set(HttpServletRequest req, String type, String message) {
         HttpSession session = req.getSession(true);
         session.setAttribute(SESSION_KEY, new FlashMessage(type, message));
+        // Direct session attribute for easy JSTL EL access
+        String attrName = "flash" + Character.toUpperCase(type.charAt(0)) + type.substring(1);
+        session.setAttribute(attrName, message);
     }
 
     /**
@@ -86,6 +99,9 @@ public final class Flash {
         FlashMessage msg = (FlashMessage) session.getAttribute(SESSION_KEY);
         if (msg != null) {
             session.removeAttribute(SESSION_KEY);
+            String attrName = "flash" + Character.toUpperCase(msg.getType().charAt(0)) + msg.getType().substring(1);
+            req.setAttribute(attrName, msg.getMessage());
+            session.removeAttribute(attrName);
         }
         return msg;
     }

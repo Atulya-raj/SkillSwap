@@ -23,6 +23,18 @@ public class ValidationException extends SkillSwapException {
     }
 
     /**
+     * Constructs a ValidationException with a single field error.
+     *
+     * @param field name of the invalid field
+     * @param error error message for the field
+     */
+    public ValidationException(String field, String error) {
+        super(error);
+        this.fieldErrors = new HashMap<>();
+        this.fieldErrors.put(field, error);
+    }
+
+    /**
      * Constructs a ValidationException with a map of field-specific errors.
      *
      * @param fieldErrors map of field names to error messages

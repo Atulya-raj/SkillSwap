@@ -1,0 +1,23 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<footer class="footer">
+    <div class="container">
+        <div>
+            <strong>SkillSwap</strong> &mdash; Peer-to-Peer Campus Skill Sharing &copy; 2026.
+            <span style="margin-left: 0.5rem; opacity: 0.8;">Built with Java 17, Jakarta EE &amp; MySQL.</span>
+        </div>
+        <div class="footer-stats">
+            <span class="status-dot"></span>
+            <span>
+                <c:choose>
+                    <c:when test="${not empty applicationScope.activeUsersCount}">
+                        <c:out value="${applicationScope.activeUsersCount}"/> active session(s)
+                    </c:when>
+                    <c:otherwise>1 active session</c:otherwise>
+                </c:choose>
+            </span>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

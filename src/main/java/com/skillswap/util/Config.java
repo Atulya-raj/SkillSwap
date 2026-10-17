@@ -74,6 +74,10 @@ public final class Config {
         return PROPERTIES.getProperty(key);
     }
 
+    public static String get(String key) {
+        return getString(key);
+    }
+
     /**
      * Gets a string configuration property with fallback default.
      *
@@ -83,6 +87,10 @@ public final class Config {
      */
     public static String getString(String key, String defaultValue) {
         return PROPERTIES.getProperty(key, defaultValue);
+    }
+
+    public static String get(String key, String defaultValue) {
+        return getString(key, defaultValue);
     }
 
     /**
