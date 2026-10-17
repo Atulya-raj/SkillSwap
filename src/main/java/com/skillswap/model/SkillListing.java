@@ -15,6 +15,7 @@ public abstract class SkillListing {
     private long id;
     private long userId;
     private int skillId;
+    private int categoryId;
     private String skillName;
     private String categoryName;
     private SkillLevel level;
@@ -75,6 +76,14 @@ public abstract class SkillListing {
 
     public void setSkillId(int skillId) {
         this.skillId = skillId;
+    }
+
+    public int getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(int categoryId) {
+        this.categoryId = categoryId;
     }
 
     public String getSkillName() {

@@ -92,6 +92,22 @@ public class MatchResult implements Comparable<MatchResult> {
         this.availabilityOverlap = availabilityOverlap;
     }
 
+    public int getScorePercent() {
+        return (int) Math.min(100, Math.max(0, Math.round(score * 100)));
+    }
+
+    public int getRelevancePercent() {
+        return (int) Math.min(100, Math.max(0, Math.round(skillRelevance * 100)));
+    }
+
+    public int getRatingPercent() {
+        return (int) Math.min(100, Math.max(0, Math.round(ratingScore * 100)));
+    }
+
+    public int getAvailabilityPercent() {
+        return (int) Math.min(100, Math.max(0, Math.round(availabilityOverlap * 100)));
+    }
+
     @Override
     public String toString() {
         return "MatchResult{provider=" + (provider != null ? provider.displayName() : "null") + ", score=" + score + "}";

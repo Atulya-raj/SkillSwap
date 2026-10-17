@@ -177,4 +177,8 @@ public final class Config {
     public static synchronized void setProperty(String key, String value) {
         PROPERTIES.setProperty(key, value);
     }
+
+    public static synchronized void set(String key, String value) {
+        setProperty(key, value);
+    }
 }
