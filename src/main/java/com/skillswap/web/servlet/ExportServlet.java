@@ -12,12 +12,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Controller streaming CSV exports for personal session history and administrative user rosters.
  */
 @WebServlet(name = "ExportServlet", urlPatterns = {"/history/export", "/admin/users/export"})
 public class ExportServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(ExportServlet.class.getName());
 
     private final ExportService exportService;
 
@@ -41,24 +45,31 @@ public class ExportServlet extends HttpServlet {
 
         String servletPath = req.getServletPath();
 
-        if ("/history/export".equals(servletPath)) {
-            resp.setContentType("text/csv; charset=UTF-8");
-            resp.setHeader("Content-Disposition", "attachment; filename=\"skillswap-session-history.csv\"");
-            exportService.exportSessionHistory(user.getId(), resp.getOutputStream());
-            return;
-        }
-
-        if ("/admin/users/export".equals(servletPath)) {
-            if (user.getRole() != Role.ADMIN) {
-                resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Administrative privileges required.");
+        try {
+            if ("/history/export".equals(servletPath)) {
+                resp.setContentType("text/csv; charset=UTF-8");
+                resp.setHeader("Content-Disposition", "attachment; filename=\"skillswap-session-history.csv\"");
+                exportService.exportSessionHistory(user.getId(), resp.getOutputStream());
                 return;
             }
-            resp.setContentType("text/csv; charset=UTF-8");
-            resp.setHeader("Content-Disposition", "attachment; filename=\"skillswap-users-roster.csv\"");
-            exportService.exportUsers(resp.getOutputStream());
-            return;
-        }
 
-        resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            if ("/admin/users/export".equals(servletPath)) {
+                if (user.getRole() != Role.ADMIN) {
+                    resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Administrative privileges required.");
+                    return;
+                }
+                resp.setContentType("text/csv; charset=UTF-8");
+                resp.setHeader("Content-Disposition", "attachment; filename=\"skillswap-users-roster.csv\"");
+                exportService.exportUsers(resp.getOutputStream());
+                return;
+            }
+
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Export failed for path " + servletPath, e);
+            if (!resp.isCommitted()) {
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Export generation failed");
+            }
+        }
     }
 }

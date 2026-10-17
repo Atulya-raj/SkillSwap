@@ -94,35 +94,41 @@ public class AuthService {
             throw new ValidationException(errors);
         }
 
-        return TransactionManager.execute(() -> {
-            Student student = new Student();
-            student.setFullName(form.getFullName().trim());
-            student.setEmail(email);
-            student.setPasswordHash(PasswordHasher.hash(form.getPassword()));
-            student.setDepartment(form.getDepartment() != null ? form.getDepartment().trim() : null);
-            student.setStudyYear(form.getStudyYear());
-            student.setBio(form.getBio() != null ? form.getBio().trim() : null);
-            student.setRole(Role.STUDENT);
-            student.setActive(true);
+        try {
+            return TransactionManager.execute(() -> {
+                Student student = new Student();
+                student.setFullName(form.getFullName().trim());
+                student.setEmail(email);
+                student.setPasswordHash(PasswordHasher.hash(form.getPassword()));
+                student.setDepartment(form.getDepartment() != null ? form.getDepartment().trim() : null);
+                student.setStudyYear(form.getStudyYear());
+                student.setBio(form.getBio() != null ? form.getBio().trim() : null);
+                student.setRole(Role.STUDENT);
+                student.setActive(true);
 
-            int signupBonus = Config.getInt("signup.bonus", 10);
-            student.setCredits(signupBonus);
+                int signupBonus = Config.getInt("signup.bonus", 10);
+                student.setCredits(signupBonus);
 
-            long userId = userDao.insert(student);
-            student.setId(userId);
+                long userId = userDao.insert(student);
+                student.setId(userId);
 
-            if (signupBonus > 0) {
-                CreditEntry bonusEntry = new CreditEntry();
-                bonusEntry.setUserId(userId);
-                bonusEntry.setEntryType(LedgerType.SIGNUP_BONUS);
-                bonusEntry.setAmount(signupBonus);
-                bonusEntry.setBalanceAfter(signupBonus);
-                bonusEntry.setNote("Welcome signup bonus");
-                creditDao.insert(bonusEntry);
-            }
+                if (signupBonus > 0) {
+                    CreditEntry bonusEntry = new CreditEntry();
+                    bonusEntry.setUserId(userId);
+                    bonusEntry.setEntryType(LedgerType.SIGNUP_BONUS);
+                    bonusEntry.setAmount(signupBonus);
+                    bonusEntry.setBalanceAfter(signupBonus);
+                    bonusEntry.setNote("Welcome signup bonus");
+                    creditDao.insert(bonusEntry);
+                }
 
-            return student;
-        });
+                return student;
+            });
+        } catch (com.skillswap.exception.ValidationException ve) {
+            throw ve;
+        } catch (com.skillswap.exception.SkillSwapException se) {
+            throw new ValidationException(se.getMessage());
+        }
     }
 
     /**

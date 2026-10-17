@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Administrative controller handling dashboard analytics, user moderation, credit adjustments, catalog management, and moderation reports.
@@ -38,6 +40,8 @@ import java.util.Map;
         maxRequestSize = 6 * 1024 * 1024       // 6 MB
 )
 public class AdminServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(AdminServlet.class.getName());
 
     private final AdminService adminService;
     private final AnalyticsService analyticsService;
@@ -105,6 +109,7 @@ public class AdminServlet extends HttpServlet {
                 default -> resp.sendRedirect(req.getContextPath() + "/admin");
             }
         } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "Admin operation failed on path: " + path, ex);
             Flash.error(session, "Operation failed: " + ex.getMessage());
             resp.sendRedirect(req.getContextPath() + "/admin");
         }

@@ -13,12 +13,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Controller serving the student user dashboard with aggregated metrics, active sessions, and recommendations.
  */
 @WebServlet(name = "DashboardServlet", urlPatterns = {"/dashboard"})
 public class DashboardServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(DashboardServlet.class.getName());
 
     private final AnalyticsService analyticsService;
 
@@ -51,6 +55,7 @@ public class DashboardServlet extends HttpServlet {
             req.setAttribute("dashboard", dashboardData);
             req.getRequestDispatcher("/WEB-INF/jsp/dashboard.jsp").forward(req, resp);
         } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "Failed to load dashboard for user " + sessionUser.getId(), ex);
             Flash.error(session, "Failed to load dashboard: " + ex.getMessage());
             resp.sendRedirect(req.getContextPath() + "/");
         }

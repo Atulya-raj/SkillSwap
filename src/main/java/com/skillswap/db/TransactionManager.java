@@ -38,11 +38,13 @@ public final class TransactionManager {
      * @param <T> the return type
      * @return the result of the work
      */
-    public static <T> T execute(TxWork<T> work) {
+    public static <T> T execute(TxWork<T> work) throws com.skillswap.exception.SkillSwapException {
         if (CURRENT_TX_CONNECTION.get() != null) {
             // Already inside an active transaction, join it
             try {
                 return work.run();
+            } catch (com.skillswap.exception.SkillSwapException e) {
+                throw e;
             } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {
@@ -66,7 +68,9 @@ public final class TransactionManager {
             } catch (SQLException e) {
                 LOGGER.log(Level.SEVERE, "Rollback failed", e);
             }
-            if (t instanceof RuntimeException) {
+            if (t instanceof com.skillswap.exception.SkillSwapException) {
+                throw (com.skillswap.exception.SkillSwapException) t;
+            } else if (t instanceof RuntimeException) {
                 throw (RuntimeException) t;
             } else if (t instanceof Error) {
                 throw (Error) t;

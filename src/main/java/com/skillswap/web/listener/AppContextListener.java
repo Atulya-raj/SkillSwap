@@ -44,7 +44,12 @@ public class AppContextListener implements ServletContextListener {
             // 5. Initialize skill catalog cache
             com.skillswap.service.CatalogService.getInstance().refreshCache();
 
-            // 6. Start notification dispatcher daemon and background scheduler
+            // 6. Seed demo dataset if enabled
+            if (Config.getBoolean("demo.data", false) || Boolean.getBoolean("demo.data")) {
+                new com.skillswap.db.DemoDataLoader().loadIfEmpty();
+            }
+
+            // 7. Start notification dispatcher daemon and background scheduler
             com.skillswap.service.NotificationDispatcher.getInstance().start();
             com.skillswap.scheduler.SchedulerService.getInstance().start();
 

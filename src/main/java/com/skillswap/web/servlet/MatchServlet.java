@@ -16,12 +16,16 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Controller providing personalized skill recommendations and match scoring breakdown.
  */
 @WebServlet("/matches")
 public class MatchServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(MatchServlet.class.getName());
 
     private final MatchService matchService;
     private final ListingService listingService;
@@ -44,34 +48,39 @@ public class MatchServlet extends HttpServlet {
             return;
         }
 
-        long userId = sessionUser.getId();
-        List<WantedSkill> wantedSkills = listingService.findWantedByUser(userId);
+        try {
+            long userId = sessionUser.getId();
+            List<WantedSkill> wantedSkills = listingService.findWantedByUser(userId);
 
-        String skillIdParam = request.getParameter("skillId");
-        List<MatchResult> matches = new ArrayList<>();
-        boolean noMatchFound = false;
+            String skillIdParam = request.getParameter("skillId");
+            List<MatchResult> matches = new ArrayList<>();
+            boolean noMatchFound = false;
 
-        if (skillIdParam != null && !skillIdParam.trim().isEmpty()) {
-            try {
-                long skillId = Long.parseLong(skillIdParam.trim());
-                matches = matchService.findFor(userId, skillId, 10);
-                request.setAttribute("selectedSkillId", skillId);
-            } catch (NoMatchFoundException e) {
-                noMatchFound = true;
-            } catch (NumberFormatException ignored) {
+            if (skillIdParam != null && !skillIdParam.trim().isEmpty()) {
+                try {
+                    long skillId = Long.parseLong(skillIdParam.trim());
+                    matches = matchService.findFor(userId, skillId, 10);
+                    request.setAttribute("selectedSkillId", skillId);
+                } catch (NoMatchFoundException e) {
+                    noMatchFound = true;
+                } catch (NumberFormatException ignored) {
+                }
+            } else {
+                matches = matchService.recommend(userId, 10);
+                if (matches.isEmpty()) {
+                    noMatchFound = true;
+                }
             }
-        } else {
-            matches = matchService.recommend(userId, 10);
-            if (matches.isEmpty()) {
-                noMatchFound = true;
-            }
+
+            request.setAttribute("matches", matches);
+            request.setAttribute("wantedSkills", wantedSkills);
+            request.setAttribute("noMatchFound", noMatchFound);
+
+            request.getRequestDispatcher("/WEB-INF/jsp/matches.jsp").forward(request, response);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed generating recommendations for user " + sessionUser.getId(), e);
+            throw new ServletException(e);
         }
-
-        request.setAttribute("matches", matches);
-        request.setAttribute("wantedSkills", wantedSkills);
-        request.setAttribute("noMatchFound", noMatchFound);
-
-        request.getRequestDispatcher("/WEB-INF/jsp/matches.jsp").forward(request, response);
     }
 
     private SessionUser getSessionUser(HttpServletRequest request) {

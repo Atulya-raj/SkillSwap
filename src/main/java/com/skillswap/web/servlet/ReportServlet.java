@@ -16,12 +16,16 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Servlet handling moderation reports against users or reviews (F-24).
  */
 @WebServlet(urlPatterns = {"/report", "/report/*"})
 public class ReportServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(ReportServlet.class.getName());
 
     private final ReportDao reportDao;
 
@@ -94,8 +98,13 @@ public class ReportServlet extends HttpServlet {
         report.setStatus(ReportStatus.OPEN);
         report.setCreatedAt(LocalDateTime.now());
 
-        reportDao.insert(report);
-        Flash.success(req, "Your report has been submitted to administrators for review.");
+        try {
+            reportDao.insert(report);
+            Flash.success(req, "Your report has been submitted to administrators for review.");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to submit moderation report", e);
+            Flash.error(req, "Failed to submit report: " + e.getMessage());
+        }
 
         redirectBack(req, resp);
     }

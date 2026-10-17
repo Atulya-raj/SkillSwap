@@ -13,12 +13,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Servlet handling submission of post-session ratings and reviews.
  */
 @WebServlet(urlPatterns = {"/reviews", "/reviews/*"})
 public class ReviewServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(ReviewServlet.class.getName());
 
     private final ReviewService reviewService;
 
@@ -76,6 +80,7 @@ public class ReviewServlet extends HttpServlet {
         } catch (SkillSwapException e) {
             Flash.error(req, e.getMessage());
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unexpected error submitting review for session " + sessionId, e);
             Flash.error(req, "An error occurred while submitting your review: " + e.getMessage());
         }
 

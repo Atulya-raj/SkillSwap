@@ -171,28 +171,38 @@ public class CreditService {
             throw new ValidationException(Map.of("amount", "Adjustment amount cannot be zero"));
         }
 
-        TransactionManager.execute(() -> {
-            User user = userDao.lockForUpdate(userId);
-            if (user == null) {
-                throw new ResourceNotFoundException("User not found: " + userId);
-            }
-            int newBalance = user.getCredits() + amount;
-            if (newBalance < 0) {
-                throw new InsufficientCreditsException("Adjustment would cause negative balance: " + newBalance);
-            }
+        try {
+            TransactionManager.execute(() -> {
+                User user = userDao.lockForUpdate(userId);
+                if (user == null) {
+                    throw new ResourceNotFoundException("User not found: " + userId);
+                }
+                int newBalance = user.getCredits() + amount;
+                if (newBalance < 0) {
+                    throw new InsufficientCreditsException("Adjustment would cause negative balance: " + newBalance);
+                }
 
-            userDao.setCredits(userId, newBalance);
+                userDao.setCredits(userId, newBalance);
 
-            CreditEntry entry = new CreditEntry();
-            entry.setUserId(userId);
-            entry.setSessionRequestId(null);
-            entry.setEntryType(LedgerType.ADMIN_ADJUST);
-            entry.setAmount(amount);
-            entry.setBalanceAfter(newBalance);
-            entry.setNote(reason.trim());
-            creditDao.insert(entry);
-            return null;
-        });
+                CreditEntry entry = new CreditEntry();
+                entry.setUserId(userId);
+                entry.setSessionRequestId(null);
+                entry.setEntryType(LedgerType.ADMIN_ADJUST);
+                entry.setAmount(amount);
+                entry.setBalanceAfter(newBalance);
+                entry.setNote(reason.trim());
+                creditDao.insert(entry);
+                return null;
+            });
+        } catch (ValidationException e) {
+            throw e;
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (InsufficientCreditsException e) {
+            throw e;
+        } catch (com.skillswap.exception.SkillSwapException e) {
+            throw new ValidationException(e.getMessage());
+        }
     }
 
     /**

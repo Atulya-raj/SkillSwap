@@ -15,12 +15,16 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Servlet handling in-app notifications listing, individual read marks, and bulk read actions.
  */
 @WebServlet(urlPatterns = {"/notifications", "/notifications/*"})
 public class NotificationServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(NotificationServlet.class.getName());
 
     private final NotificationService notificationService;
 
@@ -49,19 +53,24 @@ public class NotificationServlet extends HttpServlet {
             return;
         }
 
-        int page = Paginator.parsePage(req.getParameter("page"));
-        int pageSize = 15;
-        int total = notificationService.count(user.getId());
-        Paginator paginator = new Paginator(total, pageSize, page);
+        try {
+            int page = Paginator.parsePage(req.getParameter("page"));
+            int pageSize = 15;
+            int total = notificationService.count(user.getId());
+            Paginator paginator = new Paginator(total, pageSize, page);
 
-        List<Notification> list = notificationService.list(user.getId(), paginator.getLimit(), paginator.getOffset());
-        int unread = notificationService.unreadCount(user.getId());
+            List<Notification> list = notificationService.list(user.getId(), paginator.getLimit(), paginator.getOffset());
+            int unread = notificationService.unreadCount(user.getId());
 
-        req.setAttribute("notifications", list);
-        req.setAttribute("paginator", paginator);
-        req.setAttribute("unreadCount", unread);
+            req.setAttribute("notifications", list);
+            req.setAttribute("paginator", paginator);
+            req.setAttribute("unreadCount", unread);
 
-        req.getRequestDispatcher("/WEB-INF/jsp/notifications.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/jsp/notifications.jsp").forward(req, resp);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to load notifications for user " + user.getId(), e);
+            throw new ServletException(e);
+        }
     }
 
     @Override
@@ -76,32 +85,38 @@ public class NotificationServlet extends HttpServlet {
         String path = req.getPathInfo();
         String action = req.getParameter("action");
 
-        if ("/read-all".equals(path) || "read-all".equalsIgnoreCase(action)) {
-            notificationService.markAllRead(user.getId());
-            Flash.success(req, "All notifications marked as read.");
-            resp.sendRedirect(req.getContextPath() + "/notifications");
-            return;
-        }
-
-        if ("/read".equals(path) || "read".equalsIgnoreCase(action)) {
-            String idStr = req.getParameter("id");
-            if (idStr != null && !idStr.trim().isEmpty()) {
-                try {
-                    long id = Long.parseLong(idStr.trim());
-                    notificationService.markRead(id, user.getId());
-                } catch (NumberFormatException ignored) {
-                }
-            }
-
-            String target = req.getParameter("target");
-            if (target != null && target.startsWith("/")) {
-                resp.sendRedirect(req.getContextPath() + target);
-            } else {
+        try {
+            if ("/read-all".equals(path) || "read-all".equalsIgnoreCase(action)) {
+                notificationService.markAllRead(user.getId());
+                Flash.success(req, "All notifications marked as read.");
                 resp.sendRedirect(req.getContextPath() + "/notifications");
+                return;
             }
-            return;
-        }
 
-        resp.sendRedirect(req.getContextPath() + "/notifications");
+            if ("/read".equals(path) || "read".equalsIgnoreCase(action)) {
+                String idStr = req.getParameter("id");
+                if (idStr != null && !idStr.trim().isEmpty()) {
+                    try {
+                        long id = Long.parseLong(idStr.trim());
+                        notificationService.markRead(id, user.getId());
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+
+                String target = req.getParameter("target");
+                if (target != null && target.startsWith("/")) {
+                    resp.sendRedirect(req.getContextPath() + target);
+                } else {
+                    resp.sendRedirect(req.getContextPath() + "/notifications");
+                }
+                return;
+            }
+
+            resp.sendRedirect(req.getContextPath() + "/notifications");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to update notification status for user " + user.getId(), e);
+            Flash.error(req, "Failed to update notifications: " + e.getMessage());
+            resp.sendRedirect(req.getContextPath() + "/notifications");
+        }
     }
 }

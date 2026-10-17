@@ -14,12 +14,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Controller for browsing and searching available skill providers.
  */
 @WebServlet("/browse")
 public class BrowseServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(BrowseServlet.class.getName());
 
     private final SearchService searchService;
     private final CatalogService catalogService;
@@ -101,15 +105,20 @@ public class BrowseServlet extends HttpServlet {
             }
         }
 
-        Paginator.Page<SearchService.ProviderCard> pageResult = searchService.search(criteria, page, 10);
+        try {
+            Paginator.Page<SearchService.ProviderCard> pageResult = searchService.search(criteria, page, 10);
 
-        request.setAttribute("pageResult", pageResult);
-        request.setAttribute("criteria", criteria);
-        request.setAttribute("categories", catalogService.categories());
-        request.setAttribute("skillsByCategory", catalogService.skillsByCategory());
-        request.setAttribute("skillLevels", SkillLevel.values());
-        request.setAttribute("daysOfWeek", DayOfWeek.values());
+            request.setAttribute("pageResult", pageResult);
+            request.setAttribute("criteria", criteria);
+            request.setAttribute("categories", catalogService.categories());
+            request.setAttribute("skillsByCategory", catalogService.skillsByCategory());
+            request.setAttribute("skillLevels", SkillLevel.values());
+            request.setAttribute("daysOfWeek", DayOfWeek.values());
 
-        request.getRequestDispatcher("/WEB-INF/jsp/browse.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/jsp/browse.jsp").forward(request, response);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Search and browse failed", e);
+            throw new ServletException(e);
+        }
     }
 }

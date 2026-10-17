@@ -35,12 +35,16 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Controller servlet for session requests, negotiations, lifecycle updates, and drafts.
  */
 @WebServlet(urlPatterns = {"/requests", "/requests/*", "/cancel", "/confirm", "/noshow"})
 public class RequestServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(RequestServlet.class.getName());
 
     private final SessionService sessionService;
     private final ListingDao listingDao;
@@ -90,12 +94,17 @@ public class RequestServlet extends HttpServlet {
         String path = req.getServletPath();
         String pathInfo = req.getPathInfo();
 
-        if ("/requests/new".equals(path + (pathInfo != null ? pathInfo : "")) || "/requests/new".equals(path)) {
-            handleNewForm(req, resp, user);
-        } else if ("/requests/view".equals(path + (pathInfo != null ? pathInfo : "")) || "/requests/view".equals(path)) {
-            handleViewDetail(req, resp, user);
-        } else {
-            handleList(req, resp, user);
+        try {
+            if ("/requests/new".equals(path + (pathInfo != null ? pathInfo : "")) || "/requests/new".equals(path)) {
+                handleNewForm(req, resp, user);
+            } else if ("/requests/view".equals(path + (pathInfo != null ? pathInfo : "")) || "/requests/view".equals(path)) {
+                handleViewDetail(req, resp, user);
+            } else {
+                handleList(req, resp, user);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unexpected error in RequestServlet doGet", e);
+            throw new ServletException(e);
         }
     }
 
@@ -133,6 +142,9 @@ public class RequestServlet extends HttpServlet {
             } else {
                 resp.sendRedirect(req.getContextPath() + "/requests");
             }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unexpected error in RequestServlet doPost", e);
+            throw new ServletException(e);
         }
     }
 

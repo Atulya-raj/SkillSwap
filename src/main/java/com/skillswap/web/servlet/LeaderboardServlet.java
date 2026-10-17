@@ -16,12 +16,16 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Servlet presenting the campus skill leaderboard ranking top mentors by rating and sessions taught (F-21).
  */
 @WebServlet(urlPatterns = {"/leaderboard", "/leaderboard/*"})
 public class LeaderboardServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(LeaderboardServlet.class.getName());
 
     private final UserDao userDao;
     private final BadgeDao badgeDao;
@@ -46,21 +50,26 @@ public class LeaderboardServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        List<User> topByRating = userDao.topMentorsByRating(3, 10);
-        List<User> topBySessions = userDao.topMentorsBySessions(10);
+        try {
+            List<User> topByRating = userDao.topMentorsByRating(3, 10);
+            List<User> topBySessions = userDao.topMentorsBySessions(10);
 
-        Map<Long, List<Badge>> badgesMap = new HashMap<>();
-        for (User u : topByRating) {
-            badgesMap.computeIfAbsent(u.getId(), badgeDao::findForUser);
+            Map<Long, List<Badge>> badgesMap = new HashMap<>();
+            for (User u : topByRating) {
+                badgesMap.computeIfAbsent(u.getId(), badgeDao::findForUser);
+            }
+            for (User u : topBySessions) {
+                badgesMap.computeIfAbsent(u.getId(), badgeDao::findForUser);
+            }
+
+            req.setAttribute("topByRating", topByRating);
+            req.setAttribute("topBySessions", topBySessions);
+            req.setAttribute("badgesMap", badgesMap);
+
+            req.getRequestDispatcher("/WEB-INF/jsp/leaderboard.jsp").forward(req, resp);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed generating leaderboard", e);
+            throw new ServletException(e);
         }
-        for (User u : topBySessions) {
-            badgesMap.computeIfAbsent(u.getId(), badgeDao::findForUser);
-        }
-
-        req.setAttribute("topByRating", topByRating);
-        req.setAttribute("topBySessions", topBySessions);
-        req.setAttribute("badgesMap", badgesMap);
-
-        req.getRequestDispatcher("/WEB-INF/jsp/leaderboard.jsp").forward(req, resp);
     }
 }

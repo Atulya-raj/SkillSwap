@@ -13,12 +13,16 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Controller servlet for credit balance wallet, escrow breakdown, and ledger history.
  */
 @WebServlet("/credits")
 public class CreditServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(CreditServlet.class.getName());
 
     private final CreditService creditService;
 
@@ -53,24 +57,29 @@ public class CreditServlet extends HttpServlet {
             return;
         }
 
-        long userId = user.getId();
-        int balance = creditService.getBalance(userId);
-        int heldCredits = creditService.getHeldCredits(userId);
-        int totalEarned = creditService.getTotalEarned(userId);
+        try {
+            long userId = user.getId();
+            int balance = creditService.getBalance(userId);
+            int heldCredits = creditService.getHeldCredits(userId);
+            int totalEarned = creditService.getTotalEarned(userId);
 
-        int page = Paginator.parsePage(req.getParameter("page"));
-        int pageSize = 15;
-        int totalEntries = creditService.countLedger(userId);
-        Paginator paginator = new Paginator(totalEntries, pageSize, page);
+            int page = Paginator.parsePage(req.getParameter("page"));
+            int pageSize = 15;
+            int totalEntries = creditService.countLedger(userId);
+            Paginator paginator = new Paginator(totalEntries, pageSize, page);
 
-        List<CreditEntry> ledger = creditService.getLedger(userId, paginator.getLimit(), paginator.getOffset());
+            List<CreditEntry> ledger = creditService.getLedger(userId, paginator.getLimit(), paginator.getOffset());
 
-        req.setAttribute("balance", balance);
-        req.setAttribute("heldCredits", heldCredits);
-        req.setAttribute("totalEarned", totalEarned);
-        req.setAttribute("ledger", ledger);
-        req.setAttribute("paginator", paginator);
+            req.setAttribute("balance", balance);
+            req.setAttribute("heldCredits", heldCredits);
+            req.setAttribute("totalEarned", totalEarned);
+            req.setAttribute("ledger", ledger);
+            req.setAttribute("paginator", paginator);
 
-        req.getRequestDispatcher("/WEB-INF/jsp/credits.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/jsp/credits.jsp").forward(req, resp);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed loading credit wallet for user " + user.getId(), e);
+            throw new ServletException(e);
+        }
     }
 }
