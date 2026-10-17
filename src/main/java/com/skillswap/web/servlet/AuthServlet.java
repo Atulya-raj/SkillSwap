@@ -24,6 +24,8 @@ import java.io.IOException;
 @WebServlet(urlPatterns = {"/register", "/login", "/logout", "/password"})
 public class AuthServlet extends HttpServlet {
 
+    public static final String SESSION_USER_KEY = AuthFilter.SESSION_USER_ATTR;
+
     private final AuthService authService = new AuthService();
 
     @Override

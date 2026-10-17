@@ -11,6 +11,7 @@ public class Skill {
     private int categoryId;
     private String categoryName;
     private String name;
+    private String description;
 
     /**
      * Default constructor.
@@ -72,6 +73,14 @@ public class Skill {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override

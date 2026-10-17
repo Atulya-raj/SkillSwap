@@ -41,6 +41,9 @@ public class AppContextListener implements ServletContextListener {
             // 4. Seed admin account if none exists
             seedAdminAccountIfMissing();
 
+            // 5. Initialize skill catalog cache
+            com.skillswap.service.CatalogService.getInstance().refreshCache();
+
             LOGGER.log(Level.INFO, "SkillSwap application initialized successfully.");
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to initialize SkillSwap application context", e);
@@ -54,6 +57,10 @@ public class AppContextListener implements ServletContextListener {
         try {
             Database.getInstance().shutdown();
             LOGGER.log(Level.INFO, "Database connection pool shut down cleanly.");
+            try {
+                com.mysql.cj.jdbc.AbandonedConnectionCleanupThread.checkedShutdown();
+            } catch (Throwable ignored) {
+            }
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Error during shutdown", e);
         }

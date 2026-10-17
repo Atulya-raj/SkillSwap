@@ -20,8 +20,10 @@ import java.io.IOException;
 @WebFilter(urlPatterns = {
         "/dashboard", "/dashboard/*",
         "/profile", "/profile/*",
+        "/users/*", "/users/view",
         "/skills", "/skills/*",
         "/availability", "/availability/*",
+        "/browse", "/browse/*",
         "/matches", "/matches/*",
         "/requests", "/requests/*",
         "/cancel", "/confirm", "/noshow",
@@ -30,6 +32,8 @@ import java.io.IOException;
         "/notifications", "/notifications/*",
         "/credits", "/credits/*",
         "/history", "/history/*",
+        "/leaderboard", "/leaderboard/*",
+        "/report", "/report/*",
         "/password", "/logout",
         "/admin", "/admin/*"
 })

@@ -25,4 +25,13 @@ public class SkillSwapException extends Exception {
     public SkillSwapException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    /**
+     * Returns the user-friendly error message suitable for displaying in UI flash banners.
+     *
+     * @return user friendly message
+     */
+    public String getUserMessage() {
+        return getMessage();
+    }
 }
