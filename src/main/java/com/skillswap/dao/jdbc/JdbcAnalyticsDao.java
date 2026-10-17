@@ -22,7 +22,7 @@ public class JdbcAnalyticsDao implements AnalyticsDao {
     @Override
     public int totalUsers() {
         String sql = "SELECT COUNT(*) FROM users WHERE role = 'STUDENT'";
-        try (Connection con = Database.getInstance().getConnection();
+        try (Connection con = Database.acquire();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
@@ -42,7 +42,7 @@ public class JdbcAnalyticsDao implements AnalyticsDao {
         }
 
         String sql = "SELECT status, COUNT(*) FROM session_requests GROUP BY status";
-        try (Connection con = Database.getInstance().getConnection();
+        try (Connection con = Database.acquire();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -60,12 +60,12 @@ public class JdbcAnalyticsDao implements AnalyticsDao {
         String sql = "SELECT s.name, COUNT(*) AS cnt "
                 + "FROM user_skills us "
                 + "JOIN skills s ON us.skill_id = s.id "
-                + "WHERE us.listing_type = 'WANTED' "
+                + "WHERE us.type = 'WANTED' "
                 + "GROUP BY s.id, s.name "
                 + "ORDER BY cnt DESC, s.name ASC "
                 + "LIMIT ?";
         List<SkillCount> list = new ArrayList<>();
-        try (Connection con = Database.getInstance().getConnection();
+        try (Connection con = Database.acquire();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, n);
             try (ResultSet rs = ps.executeQuery()) {
@@ -84,12 +84,12 @@ public class JdbcAnalyticsDao implements AnalyticsDao {
         String sql = "SELECT s.name, COUNT(*) AS cnt "
                 + "FROM user_skills us "
                 + "JOIN skills s ON us.skill_id = s.id "
-                + "WHERE us.listing_type = 'OFFERED' "
+                + "WHERE us.type = 'OFFERED' "
                 + "GROUP BY s.id, s.name "
                 + "ORDER BY cnt DESC, s.name ASC "
                 + "LIMIT ?";
         List<SkillCount> list = new ArrayList<>();
-        try (Connection con = Database.getInstance().getConnection();
+        try (Connection con = Database.acquire();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, n);
             try (ResultSet rs = ps.executeQuery()) {
@@ -111,7 +111,7 @@ public class JdbcAnalyticsDao implements AnalyticsDao {
                 + "GROUP BY wk "
                 + "ORDER BY wk ASC";
         List<WeekCount> list = new ArrayList<>();
-        try (Connection con = Database.getInstance().getConnection();
+        try (Connection con = Database.acquire();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, weeks);
             try (ResultSet rs = ps.executeQuery()) {

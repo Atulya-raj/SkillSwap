@@ -5,6 +5,7 @@ import com.skillswap.dao.SkillDao;
 import com.skillswap.dao.jdbc.JdbcCategoryDao;
 import com.skillswap.dao.jdbc.JdbcSkillDao;
 import com.skillswap.exception.ValidationException;
+import com.skillswap.io.CsvImporter;
 import com.skillswap.matching.CatalogCache;
 import com.skillswap.model.Category;
 import com.skillswap.model.Skill;
@@ -152,6 +153,52 @@ public class CatalogService {
     }
 
     /**
+     * Updates an existing category's details and refreshes the cache.
+     *
+     * @param id category id
+     * @param name category name
+     * @param description category description
+     * @throws ValidationException if name is invalid
+     */
+    public void updateCategory(int id, String name, String description) throws ValidationException {
+        if (name == null || name.trim().isEmpty()) {
+            Map<String, String> err = new HashMap<>();
+            err.put("name", "Category name is required");
+            throw new ValidationException(err);
+        }
+        Category cat = new Category();
+        cat.setId(id);
+        cat.setName(name.trim());
+        cat.setDescription(description != null ? description.trim() : null);
+        categoryDao.update(cat);
+        refreshCache();
+    }
+
+    /**
+     * Updates an existing skill's details and refreshes the cache.
+     *
+     * @param id skill id
+     * @param categoryId category id
+     * @param name skill name
+     * @param description skill description
+     * @throws ValidationException if name is invalid
+     */
+    public void updateSkill(int id, int categoryId, String name, String description) throws ValidationException {
+        if (name == null || name.trim().isEmpty()) {
+            Map<String, String> err = new HashMap<>();
+            err.put("name", "Skill name is required");
+            throw new ValidationException(err);
+        }
+        Skill skill = new Skill();
+        skill.setId(id);
+        skill.setCategoryId(categoryId);
+        skill.setName(name.trim());
+        skill.setDescription(description != null ? description.trim() : null);
+        skillDao.update(skill);
+        refreshCache();
+    }
+
+    /**
      * Deletes a category by id and refreshes cache.
      *
      * @param id category id
@@ -172,48 +219,30 @@ public class CatalogService {
     }
 
     /**
+     * Imports categories and skills from a CSV input stream using CsvImporter.
+     *
+     * @param is input stream containing CSV lines
+     * @return ImportResult containing imported count and warnings
+     */
+    public CsvImporter.ImportResult importCatalogCsv(InputStream is) {
+        try {
+            CsvImporter importer = new CsvImporter();
+            CsvImporter.ImportResult result = importer.importCatalog(is, categoryDao, skillDao);
+            refreshCache();
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to import CSV", e);
+        }
+    }
+
+    /**
      * Imports categories and skills from a CSV input stream (category,skill).
      *
      * @param is input stream containing CSV lines
      * @return number of imported skills
      */
     public int importCsv(InputStream is) {
-        int count = 0;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-            String line;
-            Map<String, Integer> categoryMap = new HashMap<>();
-            for (Category c : categoryDao.findAll()) {
-                categoryMap.put(c.getName().toLowerCase(), c.getId());
-            }
-
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty() || line.startsWith("#")) {
-                    continue;
-                }
-                String[] parts = line.split(",", 2);
-                if (parts.length >= 2) {
-                    String catName = parts[0].trim();
-                    String skillName = parts[1].trim();
-                    if (!catName.isEmpty() && !skillName.isEmpty()) {
-                        int catId = categoryMap.computeIfAbsent(catName.toLowerCase(), k -> {
-                            Category newCat = new Category();
-                            newCat.setName(catName);
-                            return (int) categoryDao.insert(newCat);
-                        });
-                        Skill s = new Skill();
-                        s.setCategoryId(catId);
-                        s.setName(skillName);
-                        skillDao.insert(s);
-                        count++;
-                    }
-                }
-            }
-            refreshCache();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to import CSV", e);
-        }
-        return count;
+        return importCatalogCsv(is).getImportedCount();
     }
 
     /**

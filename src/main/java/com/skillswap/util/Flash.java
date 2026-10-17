@@ -48,6 +48,16 @@ public final class Flash {
     }
 
     /**
+     * Sets a success flash message on session.
+     *
+     * @param session HTTP session
+     * @param message notification message text
+     */
+    public static void success(HttpSession session, String message) {
+        setSession(session, "success", message);
+    }
+
+    /**
      * Sets an error flash message.
      *
      * @param req HTTP request
@@ -55,6 +65,16 @@ public final class Flash {
      */
     public static void error(HttpServletRequest req, String message) {
         set(req, "error", message);
+    }
+
+    /**
+     * Sets an error flash message on session.
+     *
+     * @param session HTTP session
+     * @param message error message text
+     */
+    public static void error(HttpSession session, String message) {
+        setSession(session, "error", message);
     }
 
     /**
@@ -68,6 +88,16 @@ public final class Flash {
     }
 
     /**
+     * Sets a warning flash message on session.
+     *
+     * @param session HTTP session
+     * @param message warning message text
+     */
+    public static void warning(HttpSession session, String message) {
+        setSession(session, "warning", message);
+    }
+
+    /**
      * Sets an informational flash message.
      *
      * @param req HTTP request
@@ -77,12 +107,27 @@ public final class Flash {
         set(req, "info", message);
     }
 
+    /**
+     * Sets an informational flash message on session.
+     *
+     * @param session HTTP session
+     * @param message info message text
+     */
+    public static void info(HttpSession session, String message) {
+        setSession(session, "info", message);
+    }
+
     private static void set(HttpServletRequest req, String type, String message) {
-        HttpSession session = req.getSession(true);
-        session.setAttribute(SESSION_KEY, new FlashMessage(type, message));
-        // Direct session attribute for easy JSTL EL access
-        String attrName = "flash" + Character.toUpperCase(type.charAt(0)) + type.substring(1);
-        session.setAttribute(attrName, message);
+        setSession(req.getSession(true), type, message);
+    }
+
+    private static void setSession(HttpSession session, String type, String message) {
+        if (session != null) {
+            session.setAttribute(SESSION_KEY, new FlashMessage(type, message));
+            // Direct session attribute for easy JSTL EL access
+            String attrName = "flash" + Character.toUpperCase(type.charAt(0)) + type.substring(1);
+            session.setAttribute(attrName, message);
+        }
     }
 
     /**

@@ -49,4 +49,21 @@ public class ActiveUsersListener implements HttpSessionListener, ServletContextL
             activeUsers.decrementAndGet();
         }
     }
+
+    /**
+     * Retrieves the current number of active user sessions.
+     *
+     * @param ctx servlet context
+     * @return active session count, or 0 if unavailable
+     */
+    public static int getActiveCount(ServletContext ctx) {
+        if (ctx == null) {
+            return 0;
+        }
+        Object attr = ctx.getAttribute(ACTIVE_USERS_ATTR);
+        if (attr instanceof AtomicInteger) {
+            return Math.max(0, ((AtomicInteger) attr).get());
+        }
+        return 0;
+    }
 }
