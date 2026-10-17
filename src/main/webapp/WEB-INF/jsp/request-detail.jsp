@@ -282,11 +282,56 @@
             </c:if>
 
             <!-- In-App Messaging Thread (available for active/completed sessions) -->
-            <a href="${pageContext.request.contextPath}/messages?requestId=${sessionRequest.id}" class="btn btn-outline">
+            <a href="${pageContext.request.contextPath}/messages?requestId=${sessionRequest.id}" class="btn btn-outline" id="btn-open-messages">
                 💬 Open Messages
             </a>
         </div>
     </div>
+
+    <!-- Review Section for COMPLETED Sessions -->
+    <c:if test="${sessionRequest.status == 'COMPLETED'}">
+        <div class="card" style="padding: 1.5rem; margin-top: 1.5rem; border: 1px solid #e2e8f0; background: #fafafa;">
+            <h3 style="margin-top: 0; color: var(--color-primary); font-size: 1.15rem;">
+                Session Review & Rating
+            </h3>
+            <c:choose>
+                <c:when test="${hasReviewed}">
+                    <div style="color: #16a34a; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+                        <span>✅</span> You have already submitted your review for this session. Thank you for your feedback!
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <p class="text-muted" style="margin-bottom: 1rem; font-size: 0.95rem;">
+                        How was your skill swap session with
+                        <strong><c:out value="${isLearner ? provider.fullName : learner.fullName}"/></strong>?
+                        Leave a rating and helpful feedback to help fellow students and unlock badges.
+                    </p>
+                    <form method="POST" action="${pageContext.request.contextPath}/reviews/new">
+                        <input type="hidden" name="_csrf" value="${csrfToken}"/>
+                        <input type="hidden" name="sessionId" value="${sessionRequest.id}"/>
+
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label for="ratingSelect" style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Rating (Stars):</label>
+                            <select id="ratingSelect" name="rating" class="form-control" style="max-width: 260px;" required>
+                                <option value="5">⭐⭐⭐⭐⭐ (5 - Outstanding)</option>
+                                <option value="4">⭐⭐⭐⭐ (4 - Very Good)</option>
+                                <option value="3">⭐⭐⭐ (3 - Average)</option>
+                                <option value="2">⭐⭐ (2 - Below Average)</option>
+                                <option value="1">⭐ (1 - Unsatisfactory)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label for="reviewComment" style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Review & Feedback (Optional):</label>
+                            <textarea id="reviewComment" name="comment" class="form-control" rows="3" maxlength="500" placeholder="Share your experience (e.g. clarity, patience, teaching effectiveness)..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="btn-submit-review">⭐ Submit Review</button>
+                    </form>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </c:if>
 </main>
 
 <%@ include file="/WEB-INF/jsp/layout/footer.jspf" %>

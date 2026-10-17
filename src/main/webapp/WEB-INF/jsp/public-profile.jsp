@@ -162,7 +162,17 @@
                         <div class="p-3 border rounded">
                             <div class="d-flex justify-between align-center mb-1">
                                 <strong>★ <c:out value="${review.rating}" /> / 5</strong>
-                                <small class="text-muted"><c:out value="${review.createdAt}" /></small>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <small class="text-muted"><c:out value="${review.createdAt}" /></small>
+                                    <c:if test="${sessionScope.currentUser != null && sessionScope.currentUser.id != review.reviewerId}">
+                                        <form action="${pageContext.request.contextPath}/report" method="post" style="display:inline; margin:0;">
+                                            <input type="hidden" name="_csrf" value="<c:out value='${csrfToken}'/>" />
+                                            <input type="hidden" name="reportedReviewId" value="<c:out value='${review.id}'/>" />
+                                            <input type="hidden" name="reason" value="Inappropriate review content" />
+                                            <button type="submit" class="btn btn-outline btn-sm" style="font-size:0.75rem; padding: 0.15rem 0.5rem; color: #dc2626; border-color: #fca5a5;" title="Report review">🚩 Report</button>
+                                        </form>
+                                    </c:if>
+                                </div>
                             </div>
                             <c:if test="${not empty review.comment}">
                                 <p class="mb-0 text-muted">"<c:out value="${review.comment}" />"</p>

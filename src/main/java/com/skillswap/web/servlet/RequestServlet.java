@@ -260,7 +260,8 @@ public class RequestServlet extends HttpServlet {
         req.setAttribute("learner", userDao.findById(sr.getLearnerId()).orElse(null));
         req.setAttribute("provider", userDao.findById(sr.getProviderId()).orElse(null));
         req.setAttribute("isLearner", isLearner);
-        req.setAttribute("isProvider", isProvider);
+        boolean hasReviewed = com.skillswap.service.ReviewService.getInstance().hasReviewed(id, user.getId());
+        req.setAttribute("hasReviewed", hasReviewed);
 
         req.getRequestDispatcher("/WEB-INF/jsp/request-detail.jsp").forward(req, resp);
     }
