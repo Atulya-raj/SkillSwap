@@ -20,6 +20,7 @@ import com.skillswap.model.SessionRequest;
 import com.skillswap.model.SkillListing;
 import com.skillswap.model.User;
 import com.skillswap.model.enums.ListingType;
+import com.skillswap.model.enums.NotificationType;
 import com.skillswap.model.enums.SessionMode;
 import com.skillswap.model.enums.SessionStatus;
 import com.skillswap.util.Config;
@@ -46,33 +47,37 @@ public class SessionService {
     private final CreditService creditService;
     private final BadgeService badgeService;
     private final DraftService draftService;
+    private final NotificationService notificationService;
 
     /**
      * Default constructor wiring standard implementations.
      */
     public SessionService() {
         this(new JdbcSessionRequestDao(), new JdbcListingDao(), new JdbcUserDao(),
-                new CreditService(), new BadgeService(), new DraftService());
+                new CreditService(), new BadgeService(), new DraftService(), NotificationService.getInstance());
     }
 
     /**
-     * Constructs SessionService with injected dependencies.
-     *
-     * @param sessionRequestDao DAO for session requests
-     * @param listingDao DAO for listings
-     * @param userDao DAO for users
-     * @param creditService service managing credit transactions
-     * @param badgeService service evaluating user badges
-     * @param draftService service managing request drafts
+     * Constructs SessionService with injected dependencies without explicit NotificationService.
      */
     public SessionService(SessionRequestDao sessionRequestDao, ListingDao listingDao, UserDao userDao,
                           CreditService creditService, BadgeService badgeService, DraftService draftService) {
+        this(sessionRequestDao, listingDao, userDao, creditService, badgeService, draftService, NotificationService.getInstance());
+    }
+
+    /**
+     * Constructs SessionService with all injected dependencies including NotificationService.
+     */
+    public SessionService(SessionRequestDao sessionRequestDao, ListingDao listingDao, UserDao userDao,
+                          CreditService creditService, BadgeService badgeService, DraftService draftService,
+                          NotificationService notificationService) {
         this.sessionRequestDao = sessionRequestDao;
         this.listingDao = listingDao;
         this.userDao = userDao;
         this.creditService = creditService;
         this.badgeService = badgeService;
         this.draftService = draftService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -158,6 +163,11 @@ public class SessionService {
         });
 
         draftService.delete(learnerId, listingId);
+        if (notificationService != null) {
+            notificationService.notify(providerId, NotificationType.REQUEST_RECEIVED,
+                    "New Swap Request", learner.getFullName() + " sent you a session request for " + listing.getSkillName(),
+                    "/requests/view?id=" + created.getId());
+        }
         return created;
     }
 
@@ -211,6 +221,12 @@ public class SessionService {
             sessionRequestDao.markResponded(requestId);
             sr.setStatus(SessionStatus.ACCEPTED);
             sr.setRespondedAt(LocalDateTime.now());
+
+            if (notificationService != null) {
+                notificationService.notify(sr.getLearnerId(), NotificationType.REQUEST_ACCEPTED,
+                        "Request Accepted!", "Your session request for " + sr.getSkillName() + " was accepted.",
+                        "/requests/view?id=" + requestId);
+            }
             return sr;
         });
     }
@@ -238,6 +254,12 @@ public class SessionService {
             creditService.release(sr.getLearnerId(), requestId, sr.getCostCredits(), "Request rejected by provider");
             sr.setStatus(SessionStatus.REJECTED);
             sr.setRespondedAt(LocalDateTime.now());
+
+            if (notificationService != null) {
+                notificationService.notify(sr.getLearnerId(), NotificationType.REQUEST_REJECTED,
+                        "Request Declined", "Your session request for " + sr.getSkillName() + " was declined. Held credits released.",
+                        "/requests/view?id=" + requestId);
+            }
             return sr;
         });
     }
@@ -266,6 +288,12 @@ public class SessionService {
                 transition(requestId, SessionStatus.PENDING, SessionStatus.CANCELLED);
                 creditService.release(sr.getLearnerId(), requestId, sr.getCostCredits(), "Pending request cancelled by learner");
                 sr.setStatus(SessionStatus.CANCELLED);
+
+                if (notificationService != null) {
+                    notificationService.notify(sr.getProviderId(), NotificationType.REQUEST_CANCELLED,
+                            "Request Cancelled", "The pending request for " + sr.getSkillName() + " was cancelled by the learner.",
+                            "/requests/view?id=" + requestId);
+                }
                 return sr;
             }
 
@@ -276,6 +304,11 @@ public class SessionService {
                 if (userId == sr.getProviderId()) {
                     // Provider cancelled accepted session: full refund to learner
                     creditService.release(sr.getLearnerId(), requestId, sr.getCostCredits(), "Accepted session cancelled by provider");
+                    if (notificationService != null) {
+                        notificationService.notify(sr.getLearnerId(), NotificationType.REQUEST_CANCELLED,
+                                "Session Cancelled", "Your accepted session for " + sr.getSkillName() + " was cancelled by your tutor. Credits refunded.",
+                                "/requests/view?id=" + requestId);
+                    }
                 } else {
                     // Learner cancelled accepted session
                     Duration untilStart = Duration.between(LocalDateTime.now(), sr.getProposedStart());
@@ -294,6 +327,11 @@ public class SessionService {
                         if (compensation > 0) {
                             creditService.pay(sr.getProviderId(), requestId, compensation, "Late cancellation compensation");
                         }
+                    }
+                    if (notificationService != null) {
+                        notificationService.notify(sr.getProviderId(), NotificationType.REQUEST_CANCELLED,
+                                "Session Cancelled", "Your accepted session for " + sr.getSkillName() + " was cancelled by the learner.",
+                                "/requests/view?id=" + requestId);
                     }
                 }
                 return sr;
@@ -354,6 +392,15 @@ public class SessionService {
 
                 sr.setStatus(SessionStatus.COMPLETED);
                 sr.setCompletedAt(LocalDateTime.now());
+
+                if (notificationService != null) {
+                    notificationService.notify(sr.getLearnerId(), NotificationType.SESSION_COMPLETED,
+                            "Session Completed", "Your session for " + sr.getSkillName() + " is completed. Leave a review!",
+                            "/requests/view?id=" + requestId);
+                    notificationService.notify(sr.getProviderId(), NotificationType.SESSION_COMPLETED,
+                            "Session Completed", "Your session for " + sr.getSkillName() + " is completed. " + sr.getCostCredits() + " credits earned!",
+                            "/requests/view?id=" + requestId);
+                }
             }
 
             return sr;
@@ -391,12 +438,30 @@ public class SessionService {
                 transition(requestId, SessionStatus.ACCEPTED, SessionStatus.NO_SHOW_LEARNER);
                 creditService.pay(sr.getProviderId(), requestId, sr.getCostCredits(), "Learner no-show compensation on session #" + requestId);
                 sr.setStatus(SessionStatus.NO_SHOW_LEARNER);
+
+                if (notificationService != null) {
+                    notificationService.notify(sr.getLearnerId(), NotificationType.NO_SHOW,
+                            "No-Show Reported", "You were reported as no-show for session #" + requestId,
+                            "/requests/view?id=" + requestId);
+                    notificationService.notify(sr.getProviderId(), NotificationType.NO_SHOW,
+                            "No-Show Compensation", "Learner no-show confirmed. You have been paid " + sr.getCostCredits() + " credits.",
+                            "/requests/view?id=" + requestId);
+                }
             } else {
                 // Learner reports provider no-show: learner refunded, provider gets strike
                 transition(requestId, SessionStatus.ACCEPTED, SessionStatus.NO_SHOW_PROVIDER);
                 creditService.release(sr.getLearnerId(), requestId, sr.getCostCredits(), "Provider no-show refund on session #" + requestId);
                 userDao.incrementStrikes(sr.getProviderId());
                 sr.setStatus(SessionStatus.NO_SHOW_PROVIDER);
+
+                if (notificationService != null) {
+                    notificationService.notify(sr.getProviderId(), NotificationType.NO_SHOW,
+                            "No-Show Strike Recorded", "You were reported as no-show for session #" + requestId + ". A strike was added.",
+                            "/requests/view?id=" + requestId);
+                    notificationService.notify(sr.getLearnerId(), NotificationType.NO_SHOW,
+                            "No-Show Refund", "Provider no-show confirmed. Your credits were refunded in full.",
+                            "/requests/view?id=" + requestId);
+                }
             }
 
             return sr;
@@ -419,6 +484,11 @@ public class SessionService {
                 TransactionManager.execute(() -> {
                     transition(sr.getId(), SessionStatus.PENDING, SessionStatus.EXPIRED);
                     creditService.release(sr.getLearnerId(), sr.getId(), sr.getCostCredits(), "Request expired automatically");
+                    if (notificationService != null) {
+                        notificationService.notify(sr.getLearnerId(), NotificationType.REQUEST_EXPIRED,
+                                "Request Expired", "Your pending request for " + sr.getSkillName() + " expired without a response.",
+                                "/requests/view?id=" + sr.getId());
+                    }
                     return null;
                 });
                 count++;
@@ -451,6 +521,15 @@ public class SessionService {
 
                     badgeService.evaluate(sr.getProviderId());
                     badgeService.evaluate(sr.getLearnerId());
+
+                    if (notificationService != null) {
+                        notificationService.notify(sr.getLearnerId(), NotificationType.SESSION_COMPLETED,
+                                "Session Auto-Completed", "Your session for " + sr.getSkillName() + " was auto-completed.",
+                                "/requests/view?id=" + sr.getId());
+                        notificationService.notify(sr.getProviderId(), NotificationType.SESSION_COMPLETED,
+                                "Session Auto-Completed", "Your session for " + sr.getSkillName() + " was auto-completed.",
+                                "/requests/view?id=" + sr.getId());
+                    }
                     return null;
                 });
                 count++;

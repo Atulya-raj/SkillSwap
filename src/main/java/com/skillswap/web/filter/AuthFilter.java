@@ -73,6 +73,12 @@ public class AuthFilter implements Filter {
             return;
         }
 
+        try {
+            int unread = com.skillswap.service.NotificationService.getInstance().unreadCount(user.getId());
+            httpRequest.setAttribute("unreadNotificationsCount", unread);
+        } catch (Exception ignored) {
+        }
+
         chain.doFilter(request, response);
     }
 }

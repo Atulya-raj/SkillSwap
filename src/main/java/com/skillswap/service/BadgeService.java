@@ -37,6 +37,7 @@ public class BadgeService {
     private final ReviewDao reviewDao;
     private final BadgeDao badgeDao;
     private final List<BadgeRule> rules;
+    private final NotificationService notificationService;
 
     public BadgeService() {
         this(new JdbcUserDao(), new JdbcListingDao(), new JdbcReviewDao(), new JdbcBadgeDao(),
@@ -47,16 +48,22 @@ public class BadgeService {
                         new PerfectFiveRule(),
                         new ConnectorRule(),
                         new ReliableRule()
-                ));
+                ), NotificationService.getInstance());
     }
 
     public BadgeService(UserDao userDao, ListingDao listingDao, ReviewDao reviewDao,
                         BadgeDao badgeDao, List<BadgeRule> rules) {
+        this(userDao, listingDao, reviewDao, badgeDao, rules, NotificationService.getInstance());
+    }
+
+    public BadgeService(UserDao userDao, ListingDao listingDao, ReviewDao reviewDao,
+                        BadgeDao badgeDao, List<BadgeRule> rules, NotificationService notificationService) {
         this.userDao = userDao;
         this.listingDao = listingDao;
         this.reviewDao = reviewDao;
         this.badgeDao = badgeDao;
         this.rules = rules;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -97,6 +104,10 @@ public class BadgeService {
                 if (!badgeDao.has(userId, rule.code()) && rule.qualifies(user, stats)) {
                     badgeDao.award(userId, rule.code());
                     LOGGER.info("Awarded badge " + rule.code() + " to user id " + userId);
+                    if (notificationService != null) {
+                        notificationService.notify(userId, com.skillswap.model.enums.NotificationType.BADGE_AWARDED,
+                                "Badge Unlocked!", "Congratulations! You earned the " + rule.code() + " badge.", "/profile");
+                    }
                 }
             }
         } catch (Exception e) {

@@ -30,11 +30,36 @@ public final class Config {
                 PROPERTIES.clear();
                 PROPERTIES.load(in);
                 resolvePlaceholders(PROPERTIES);
+
+                String profile = System.getProperty("skillswap.profile", PROPERTIES.getProperty("skillswap.profile"));
+                if (profile != null && !profile.trim().isEmpty()) {
+                    loadProfile(profile.trim());
+                }
             } else {
                 LOGGER.log(Level.WARNING, "config.properties not found on classpath");
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to load config.properties", e);
+        }
+    }
+
+    /**
+     * Loads an overlay configuration profile (e.g., config-demo.properties).
+     *
+     * @param profileName name of profile
+     */
+    public static synchronized void loadProfile(String profileName) {
+        String filename = "config-" + profileName + ".properties";
+        try (InputStream in = Config.class.getClassLoader().getResourceAsStream(filename)) {
+            if (in != null) {
+                Properties override = new Properties();
+                override.load(in);
+                resolvePlaceholders(override);
+                PROPERTIES.putAll(override);
+                LOGGER.log(Level.INFO, "Loaded configuration profile: {0}", profileName);
+            }
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Failed to load profile: " + profileName, e);
         }
     }
 

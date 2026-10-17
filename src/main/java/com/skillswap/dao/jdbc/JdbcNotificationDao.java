@@ -71,6 +71,23 @@ public class JdbcNotificationDao implements NotificationDao {
     }
 
     @Override
+    public int countByUser(long userId) {
+        String sql = "SELECT COUNT(*) FROM notifications WHERE user_id = ?";
+        try (Connection con = Database.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+            return 0;
+        } catch (SQLException ex) {
+            throw new DataAccessException("Failed to count notifications for user " + userId, ex);
+        }
+    }
+
+    @Override
     public int countUnread(long userId) {
         String sql = "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = FALSE";
         try (Connection con = Database.getInstance().getConnection();

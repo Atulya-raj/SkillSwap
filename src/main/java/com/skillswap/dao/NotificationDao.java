@@ -13,6 +13,8 @@ public interface NotificationDao {
 
     List<Notification> findByUser(long userId, int limit, int offset);
 
+    int countByUser(long userId);
+
     int countUnread(long userId);
 
     void markAllRead(long userId);

@@ -44,6 +44,10 @@ public class AppContextListener implements ServletContextListener {
             // 5. Initialize skill catalog cache
             com.skillswap.service.CatalogService.getInstance().refreshCache();
 
+            // 6. Start notification dispatcher daemon and background scheduler
+            com.skillswap.service.NotificationDispatcher.getInstance().start();
+            com.skillswap.scheduler.SchedulerService.getInstance().start();
+
             LOGGER.log(Level.INFO, "SkillSwap application initialized successfully.");
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to initialize SkillSwap application context", e);
@@ -55,6 +59,16 @@ public class AppContextListener implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent sce) {
         LOGGER.log(Level.INFO, "SkillSwap web application shutting down...");
         try {
+            try {
+                com.skillswap.scheduler.SchedulerService.getInstance().stop();
+            } catch (Throwable t) {
+                LOGGER.log(Level.WARNING, "Error stopping SchedulerService", t);
+            }
+            try {
+                com.skillswap.service.NotificationDispatcher.getInstance().stop();
+            } catch (Throwable t) {
+                LOGGER.log(Level.WARNING, "Error stopping NotificationDispatcher", t);
+            }
             Database.getInstance().shutdown();
             LOGGER.log(Level.INFO, "Database connection pool shut down cleanly.");
             try {
