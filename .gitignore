@@ -1,0 +1,9 @@
+target/
+tools/
+logs/
+uploads/
+drafts/
+*.log
+.idea/
+*.iml
+.DS_Store
