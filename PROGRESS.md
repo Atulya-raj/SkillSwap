@@ -21,12 +21,12 @@
 - [x] Add a temporary `PingServlet` at `/ping` returning "SkillSwap OK".
 
 ### Phase 1 — Database and connection layer
-- [ ] Save `schema.sql` and `seed.sql` from `database-schema.md` under `src/main/resources/db/`.
-- [ ] Implement `Database` (singleton): `ArrayBlockingQueue<Connection>` pool, `init(Config)`, `acquire()`, `shutdown()`. Hand out `java.lang.reflect.Proxy` connections whose `close()` returns to the pool. Borrow with `poll(timeout)`; throw `DataAccessException` on timeout. Validate a connection with `isValid(2)` before handing it out and replace it if dead.
-- [ ] Implement `TransactionManager.execute(TxWork<T>)` with a `ThreadLocal<Connection>`; commit on success, rollback on any `Throwable`, always clear the ThreadLocal. `TxWork<T>` is a functional interface `T run() throws Exception`.
-- [ ] Implement `DatabaseInitializer` (reads schema, splits statements, runs seed only if `categories` is empty).
-- [ ] Implement `AppContextListener` (`contextInitialized`: load config, init pool, run initializer; `contextDestroyed`: shutdown pool). Register via `@WebListener`.
-- [ ] Update `PingServlet` to also report the number of categories from the DB.
+- [x] Save `schema.sql` and `seed.sql` from `database-schema.md` under `src/main/resources/db/`.
+- [x] Implement `Database` (singleton): `ArrayBlockingQueue<Connection>` pool, `init(Config)`, `acquire()`, `shutdown()`. Hand out `java.lang.reflect.Proxy` connections whose `close()` returns to the pool. Borrow with `poll(timeout)`; throw `DataAccessException` on timeout. Validate a connection with `isValid(2)` before handing it out and replace it if dead.
+- [x] Implement `TransactionManager.execute(TxWork<T>)` with a `ThreadLocal<Connection>`; commit on success, rollback on any `Throwable`, always clear the ThreadLocal. `TxWork<T>` is a functional interface `T run() throws Exception`.
+- [x] Implement `DatabaseInitializer` (reads schema, splits statements, runs seed only if `categories` is empty).
+- [x] Implement `AppContextListener` (`contextInitialized`: load config, init pool, run initializer; `contextDestroyed`: shutdown pool). Register via `@WebListener`.
+- [x] Update `PingServlet` to also report the number of categories from the DB.
 
 ### Phase 2 — Domain model, exceptions, utilities
 - [ ] Create all enums in `model/enums` (with `SessionStatus.isTerminal()` and `canMoveTo()` encoding the state machine from `blueprint.md`).
@@ -122,3 +122,4 @@
 
 ## Log
 - **Phase 0 completed**: Installed and verified JDK 17, downloaded Maven 3.9.9 and Tomcat 10.1.34 into `tools/`, configured MySQL 8.4 with databases `skillswap` and `skillswap_test`. Initialized git repo, package tree, pom.xml, web.xml, config.properties, logging.properties, PingServlet, run scripts, and PROGRESS.md. Verified with `mvn clean package` and runtime deployment to Tomcat returning "SkillSwap OK" at `/ping`.
+- **Phase 1 completed**: Installed native MySQL 8.4 via winget and initialized self-contained data directory in `tools/mysql-data`. Implemented Database connection pool with reflection Proxy, TransactionManager with ThreadLocal, DatabaseInitializer for schema.sql and seed.sql, AppContextListener, updated PingServlet to report category count. All 3 JUnit tests in DatabaseTest passed (`mvn test`). Tomcat runtime verified returning "SkillSwap OK - Categories: 8" at `/ping`.
