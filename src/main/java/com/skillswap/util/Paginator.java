@@ -6,9 +6,43 @@ import java.util.List;
 /**
  * Pagination helper and immutable page container.
  */
-public final class Paginator {
+public class Paginator {
 
-    private Paginator() {
+    private final int totalItems;
+    private final int pageSize;
+    private final int currentPage;
+    private final int totalPages;
+
+    /**
+     * Constructs a Paginator instance for pagination calculation and UI rendering.
+     *
+     * @param totalItems total count of items
+     * @param pageSize items per page
+     * @param currentPage 1-indexed current page number
+     */
+    public Paginator(int totalItems, int pageSize, int currentPage) {
+        this.totalItems = Math.max(0, totalItems);
+        this.pageSize = Math.max(1, pageSize);
+        this.totalPages = calculateTotalPages(this.totalItems, this.pageSize);
+        this.currentPage = Math.min(Math.max(1, currentPage), this.totalPages);
+    }
+
+    /**
+     * Safely parses a page query string to an integer (defaults to 1).
+     *
+     * @param pageStr query parameter value
+     * @return 1-indexed page number
+     */
+    public static int parsePage(String pageStr) {
+        if (pageStr == null || pageStr.trim().isEmpty()) {
+            return 1;
+        }
+        try {
+            int p = Integer.parseInt(pageStr.trim());
+            return Math.max(1, p);
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 
     /**
@@ -32,7 +66,39 @@ public final class Paginator {
      */
     public static int calculateTotalPages(int totalItems, int pageSize) {
         if (pageSize <= 0) return 1;
-        return (int) Math.ceil((double) totalItems / pageSize);
+        return Math.max(1, (int) Math.ceil((double) totalItems / pageSize));
+    }
+
+    public int getLimit() {
+        return pageSize;
+    }
+
+    public int getOffset() {
+        return calculateOffset(currentPage, pageSize);
+    }
+
+    public int getCurrentPage() {
+        return currentPage;
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public int getTotalItems() {
+        return totalItems;
+    }
+
+    public int getTotalPages() {
+        return totalPages;
+    }
+
+    public boolean hasPrev() {
+        return currentPage > 1;
+    }
+
+    public boolean hasNext() {
+        return currentPage < totalPages;
     }
 
     /**
