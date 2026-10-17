@@ -35,13 +35,13 @@
 - [x] Create utilities: `PasswordHasher` (PBKDF2WithHmacSHA256, 120000 iterations, 16-byte salt, `iterations:salt:hash` format, constant-time compare), `Validator`, `Flash` (session-scoped one-shot message), `Paginator`/`Page<T>`, `DateUtil` (`java.time` helpers, `Asia/Kolkata`), `Html` (escape helper for places JSTL cannot cover).
 
 ### Phase 3 — DAO layer
-- [ ] Create all DAO interfaces from `database-schema.md` section 4 and `SearchCriteria`.
-- [ ] Implement them in `dao/jdbc/` using only `PreparedStatement`, try-with-resources, and `Database.acquire()` (joins the current transaction when present).
-- [ ] Map `user_skills` rows to `OfferedSkill`/`WantedSkill` by the `type` column (polymorphic mapping).
-- [ ] `SessionRequestDao.updateStatus(id, from, to)` must be a guarded UPDATE returning whether a row changed.
-- [ ] `lockForUpdate` / `lockById` use `SELECT ... FOR UPDATE`.
-- [ ] Wrap `SQLException` into `DataAccessException` everywhere.
-- [ ] Write a small `TestData` helper to insert sample users/skills for tests.
+- [x] Create all DAO interfaces from `database-schema.md` section 4 and `SearchCriteria`.
+- [x] Implement them in `dao/jdbc/` using only `PreparedStatement`, try-with-resources, and `Database.acquire()` (joins the current transaction when present).
+- [x] Map `user_skills` rows to `OfferedSkill`/`WantedSkill` by the `type` column (polymorphic mapping).
+- [x] `SessionRequestDao.updateStatus(id, from, to)` must be a guarded UPDATE returning whether a row changed.
+- [x] `lockForUpdate` / `lockById` use `SELECT ... FOR UPDATE`.
+- [x] Wrap `SQLException` into `DataAccessException` everywhere.
+- [x] Write a small `TestData` helper to insert sample users/skills for tests.
 
 ### Phase 4 — Auth, security filters, base UI shell
 - [ ] `AuthService.register/login/changePassword`; grant the signup bonus (ledger `SIGNUP_BONUS`) inside one transaction; enforce `allowed.email.domain` when set.
@@ -124,3 +124,4 @@
 - **Phase 0 completed**: Installed and verified JDK 17, downloaded Maven 3.9.9 and Tomcat 10.1.34 into `tools/`, configured MySQL 8.4 with databases `skillswap` and `skillswap_test`. Initialized git repo, package tree, pom.xml, web.xml, config.properties, logging.properties, PingServlet, run scripts, and PROGRESS.md. Verified with `mvn clean package` and runtime deployment to Tomcat returning "SkillSwap OK" at `/ping`.
 - **Phase 1 completed**: Installed native MySQL 8.4 via winget and initialized self-contained data directory in `tools/mysql-data`. Implemented Database connection pool with reflection Proxy, TransactionManager with ThreadLocal, DatabaseInitializer for schema.sql and seed.sql, AppContextListener, updated PingServlet to report category count. All 3 JUnit tests in DatabaseTest passed (`mvn test`). Tomcat runtime verified returning "SkillSwap OK - Categories: 8" at `/ping`.
 - **Phase 2 completed**: Implemented all enums in `model.enums` including SessionStatus state machine (`isTerminal()`, `canMoveTo()`), all model entities (`User`, `Student`, `Admin`, `Category`, `Skill`, `SkillListing`, `OfferedSkill`, `WantedSkill`, `AvailabilitySlot`, `SessionRequest`, `CreditEntry`, `Review`, `Notification`, `Message`, `Badge`, `Report`, `RequestDraft`, `MatchResult`, `SessionUser`), full exception hierarchy with `ValidationException` field errors, and utilities (`PasswordHasher` with PBKDF2/120k iterations/constant-time check, `Validator`, `Flash`, `Paginator`, `DateUtil`, `Html`). All 7 tests in `DatabaseTest` and `DomainModelTest` passed.
+- **Phase 3 completed**: Implemented all 12 DAO interfaces and SearchCriteria in `com.skillswap.dao` and their JDBC implementations in `com.skillswap.dao.jdbc` (`JdbcUserDao`, `JdbcCategoryDao`, `JdbcSkillDao`, `JdbcListingDao`, `JdbcAvailabilityDao`, `JdbcSessionRequestDao`, `JdbcCreditDao`, `JdbcReviewDao`, `JdbcNotificationDao`, `JdbcMessageDao`, `JdbcBadgeDao`, `JdbcReportDao`, `JdbcAnalyticsDao`). Configured test `config.properties` for `skillswap_test` schema. Implemented `TestData` fixture generator and `DaoIntegrationTest`. Verified all 12 tests passing in `mvn test` covering polymorphic listings, guarded state transitions, edge-case overlap checks, user CRUD, and availability checks.

@@ -65,6 +65,14 @@ public abstract class User implements Notifiable {
         this.fullName = fullName;
     }
 
+    public String getName() {
+        return fullName;
+    }
+
+    public void setName(String name) {
+        this.fullName = name;
+    }
+
     public String getEmail() {
         return email;
     }

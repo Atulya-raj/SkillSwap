@@ -55,4 +55,12 @@ public class OfferedSkill extends SkillListing {
     public void setCreditsPerHour(int creditsPerHour) {
         this.creditsPerHour = creditsPerHour;
     }
+
+    public int getHourlyRate() {
+        return creditsPerHour;
+    }
+
+    public void setHourlyRate(int hourlyRate) {
+        this.creditsPerHour = hourlyRate;
+    }
 }

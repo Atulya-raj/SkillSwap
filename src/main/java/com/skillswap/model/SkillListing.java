@@ -35,6 +35,10 @@ public abstract class SkillListing {
      */
     public abstract ListingType type();
 
+    public ListingType getType() {
+        return type();
+    }
+
     /**
      * Returns a human-readable description of this listing.
      *
