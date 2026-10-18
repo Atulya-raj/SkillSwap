@@ -1,16 +1,18 @@
 package com.skillswap.web.filter;
 
+import com.skillswap.util.Flash;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 
 /**
- * Filter ensuring UTF-8 encoding across all HTTP requests and responses.
+ * Filter ensuring UTF-8 encoding and consuming one-shot flash messages across HTTP requests.
  */
 @WebFilter("/*")
 public class EncodingFilter implements Filter {
@@ -20,6 +22,11 @@ public class EncodingFilter implements Filter {
             throws IOException, ServletException {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
+
+        if (request instanceof HttpServletRequest httpRequest) {
+            Flash.consume(httpRequest);
+        }
+
         chain.doFilter(request, response);
     }
 }

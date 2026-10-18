@@ -67,17 +67,136 @@
     </div>
 </header>
 
-<div class="container flash-container">
-    <c:if test="${not empty flashSuccess}">
-        <div class="flash-message flash-success" id="flash-success-box"><c:out value="${flashSuccess}"/></div>
-    </c:if>
-    <c:if test="${not empty flashError}">
-        <div class="flash-message flash-error" id="flash-error-box"><c:out value="${flashError}"/></div>
-    </c:if>
-    <c:if test="${not empty flashWarning}">
-        <div class="flash-message flash-warning" id="flash-warning-box"><c:out value="${flashWarning}"/></div>
-    </c:if>
-    <c:if test="${not empty flashInfo}">
-        <div class="flash-message flash-info" id="flash-info-box"><c:out value="${flashInfo}"/></div>
-    </c:if>
-</div>
+<c:set var="hasFlash" value="${not empty flashSuccess || not empty flashError || not empty flashWarning || not empty flashInfo}" />
+<c:if test="${hasFlash}">
+    <div class="container flash-container" id="flash-container">
+        <c:if test="${not empty flashSuccess}">
+            <div class="flash-message flash-success" id="flash-success-box" role="alert" data-auto-dismiss="4500">
+                <div class="flash-content">
+                    <span class="flash-icon" aria-hidden="true">&#10003;</span>
+                    <span class="flash-text"><c:out value="${flashSuccess}"/></span>
+                </div>
+                <button type="button" class="flash-close" aria-label="Close notification" title="Dismiss">&times;</button>
+                <div class="flash-progress"><div class="flash-progress-bar"></div></div>
+            </div>
+        </c:if>
+        <c:if test="${not empty flashError}">
+            <div class="flash-message flash-error" id="flash-error-box" role="alert" data-auto-dismiss="5500">
+                <div class="flash-content">
+                    <span class="flash-icon" aria-hidden="true">&#10005;</span>
+                    <span class="flash-text"><c:out value="${flashError}"/></span>
+                </div>
+                <button type="button" class="flash-close" aria-label="Close notification" title="Dismiss">&times;</button>
+                <div class="flash-progress"><div class="flash-progress-bar"></div></div>
+            </div>
+        </c:if>
+        <c:if test="${not empty flashWarning}">
+            <div class="flash-message flash-warning" id="flash-warning-box" role="alert" data-auto-dismiss="5000">
+                <div class="flash-content">
+                    <span class="flash-icon" aria-hidden="true">&#9888;</span>
+                    <span class="flash-text"><c:out value="${flashWarning}"/></span>
+                </div>
+                <button type="button" class="flash-close" aria-label="Close notification" title="Dismiss">&times;</button>
+                <div class="flash-progress"><div class="flash-progress-bar"></div></div>
+            </div>
+        </c:if>
+        <c:if test="${not empty flashInfo}">
+            <div class="flash-message flash-info" id="flash-info-box" role="alert" data-auto-dismiss="4500">
+                <div class="flash-content">
+                    <span class="flash-icon" aria-hidden="true">&#8505;</span>
+                    <span class="flash-text"><c:out value="${flashInfo}"/></span>
+                </div>
+                <button type="button" class="flash-close" aria-label="Close notification" title="Dismiss">&times;</button>
+                <div class="flash-progress"><div class="flash-progress-bar"></div></div>
+            </div>
+        </c:if>
+    </div>
+    <c:remove var="flashSuccess" scope="session"/>
+    <c:remove var="flashError" scope="session"/>
+    <c:remove var="flashWarning" scope="session"/>
+    <c:remove var="flashInfo" scope="session"/>
+    <c:remove var="SKILLSWAP_FLASH_MESSAGE" scope="session"/>
+
+    <script>
+    (function() {
+        function initFlashMessages() {
+            var messages = document.querySelectorAll('.flash-message');
+            messages.forEach(function(msg) {
+                var duration = parseInt(msg.getAttribute('data-auto-dismiss'), 10) || 4500;
+                var progressBar = msg.querySelector('.flash-progress-bar');
+                var closeBtn = msg.querySelector('.flash-close');
+                var timeoutId = null;
+                var startTime = Date.now();
+                var remaining = duration;
+                var isPaused = false;
+
+                function dismiss() {
+                    if (msg.classList.contains('flash-dismissing')) return;
+                    msg.classList.add('flash-dismissing');
+                    setTimeout(function() {
+                        if (msg.parentNode) {
+                            var parent = msg.parentNode;
+                            parent.removeChild(msg);
+                            if (parent.querySelectorAll('.flash-message').length === 0) {
+                                parent.style.display = 'none';
+                            }
+                        }
+                    }, 380);
+                }
+
+                function startTimer() {
+                    startTime = Date.now();
+                    if (progressBar) {
+                        progressBar.style.transition = 'width ' + remaining + 'ms linear';
+                        progressBar.style.width = '0%';
+                    }
+                    timeoutId = setTimeout(dismiss, remaining);
+                }
+
+                function pauseTimer() {
+                    if (isPaused) return;
+                    isPaused = true;
+                    clearTimeout(timeoutId);
+                    var elapsed = Date.now() - startTime;
+                    remaining = Math.max(0, remaining - elapsed);
+                    if (progressBar) {
+                        var percent = (remaining / duration) * 100;
+                        progressBar.style.transition = 'none';
+                        progressBar.style.width = percent + '%';
+                    }
+                }
+
+                function resumeTimer() {
+                    if (!isPaused) return;
+                    isPaused = false;
+                    if (remaining <= 50) {
+                        dismiss();
+                    } else {
+                        startTimer();
+                    }
+                }
+
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        clearTimeout(timeoutId);
+                        dismiss();
+                    });
+                }
+
+                msg.addEventListener('mouseenter', pauseTimer);
+                msg.addEventListener('mouseleave', resumeTimer);
+
+                // Initial start
+                startTimer();
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initFlashMessages);
+        } else {
+            initFlashMessages();
+        }
+    })();
+    </script>
+</c:if>

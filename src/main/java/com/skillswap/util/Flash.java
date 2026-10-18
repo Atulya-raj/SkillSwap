@@ -119,10 +119,19 @@ public final class Flash {
 
     private static void set(HttpServletRequest req, String type, String message) {
         setSession(req.getSession(true), type, message);
+        String attrName = "flash" + Character.toUpperCase(type.charAt(0)) + type.substring(1);
+        req.setAttribute(attrName, message);
     }
 
     private static void setSession(HttpSession session, String type, String message) {
         if (session != null) {
+            // Scrub any previous flash messages so they don't persist or collide
+            session.removeAttribute("flashSuccess");
+            session.removeAttribute("flashError");
+            session.removeAttribute("flashWarning");
+            session.removeAttribute("flashInfo");
+            session.removeAttribute(SESSION_KEY);
+
             session.setAttribute(SESSION_KEY, new FlashMessage(type, message));
             // Direct session attribute for easy JSTL EL access
             String attrName = "flash" + Character.toUpperCase(type.charAt(0)) + type.substring(1);
@@ -148,6 +157,11 @@ public final class Flash {
             req.setAttribute(attrName, msg.getMessage());
             session.removeAttribute(attrName);
         }
+        // Always clear all direct flash session attributes on consumption
+        session.removeAttribute("flashSuccess");
+        session.removeAttribute("flashError");
+        session.removeAttribute("flashWarning");
+        session.removeAttribute("flashInfo");
         return msg;
     }
 }
