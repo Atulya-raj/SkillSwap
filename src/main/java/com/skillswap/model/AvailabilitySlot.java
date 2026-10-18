@@ -1,5 +1,6 @@
 package com.skillswap.model;
 
+import com.skillswap.model.enums.SessionMode;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
@@ -15,6 +16,7 @@ public class AvailabilitySlot {
     private DayOfWeek dayOfWeek;
     private LocalTime startTime;
     private LocalTime endTime;
+    private SessionMode mode = SessionMode.ONLINE;
 
     /**
      * Default constructor.
@@ -31,10 +33,15 @@ public class AvailabilitySlot {
      * @param endTime slot end time
      */
     public AvailabilitySlot(long userId, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
+        this(userId, dayOfWeek, startTime, endTime, SessionMode.ONLINE);
+    }
+
+    public AvailabilitySlot(long userId, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, SessionMode mode) {
         this.userId = userId;
         this.dayOfWeek = dayOfWeek;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.mode = mode != null ? mode : SessionMode.ONLINE;
     }
 
     /**
@@ -94,6 +101,14 @@ public class AvailabilitySlot {
 
     public void setEndTime(LocalTime endTime) {
         this.endTime = endTime;
+    }
+
+    public SessionMode getMode() {
+        return mode != null ? mode : SessionMode.ONLINE;
+    }
+
+    public void setMode(SessionMode mode) {
+        this.mode = mode != null ? mode : SessionMode.ONLINE;
     }
 
     @Override

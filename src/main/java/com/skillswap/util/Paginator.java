@@ -97,8 +97,16 @@ public class Paginator {
         return currentPage > 1;
     }
 
+    public boolean isHasPrev() {
+        return hasPrev();
+    }
+
     public boolean hasNext() {
         return currentPage < totalPages;
+    }
+
+    public boolean isHasNext() {
+        return hasNext();
     }
 
     /**
@@ -153,8 +161,24 @@ public class Paginator {
             return page > 1;
         }
 
+        public boolean isHasPrevious() {
+            return hasPrevious();
+        }
+
+        public boolean getHasPrevious() {
+            return hasPrevious();
+        }
+
         public boolean hasNext() {
             return page < totalPages;
+        }
+
+        public boolean isHasNext() {
+            return hasNext();
+        }
+
+        public boolean getHasNext() {
+            return hasNext();
         }
 
         public boolean isEmpty() {

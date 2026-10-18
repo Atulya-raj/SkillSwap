@@ -62,6 +62,11 @@ public class AvailabilityService {
      */
     public long add(long userId, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime)
             throws ValidationException {
+        return add(userId, dayOfWeek, startTime, endTime, SessionMode.ONLINE);
+    }
+
+    public long add(long userId, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, SessionMode mode)
+            throws ValidationException {
         Validator.validateAvailability(dayOfWeek, startTime, endTime);
 
         if (availabilityDao.hasOverlap(userId, dayOfWeek, startTime, endTime, null)) {
@@ -75,13 +80,9 @@ public class AvailabilityService {
         slot.setDayOfWeek(dayOfWeek);
         slot.setStartTime(startTime);
         slot.setEndTime(endTime);
+        slot.setMode(mode != null ? mode : SessionMode.ONLINE);
 
         return availabilityDao.insert(slot);
-    }
-
-    public long add(long userId, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, SessionMode mode)
-            throws ValidationException {
-        return add(userId, dayOfWeek, startTime, endTime);
     }
 
     /**

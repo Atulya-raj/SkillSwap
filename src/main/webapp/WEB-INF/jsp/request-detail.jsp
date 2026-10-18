@@ -178,6 +178,9 @@
             <span class="text-muted" style="display: block; font-size: 0.85rem; margin-bottom: 0.25rem;">Meeting Location / Link:</span>
             <div style="background: #f8fafc; padding: 0.75rem; border-radius: 6px; font-weight: 500;">
                 <c:choose>
+                    <c:when test="${empty sessionRequest.meetingDetails}">
+                        <span class="text-muted">Not specified</span>
+                    </c:when>
                     <c:when test="${sessionRequest.meetingDetails.startsWith('http://') || sessionRequest.meetingDetails.startsWith('https://')}">
                         <a href="<c:out value='${sessionRequest.meetingDetails}'/>" target="_blank" rel="noopener noreferrer" style="color: var(--color-teal); word-break: break-all;">
                             🔗 <c:out value="${sessionRequest.meetingDetails}"/> (Open Link)
